@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Math Flight</title>
+<meta name="description" content="Juego educativo 2D: pilotea una nave espacial y resuelve matemáticas de geometría analítica, funciones y límites.">
+<meta name="theme-color" content="#050414">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Exo+2:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="wrap">
+<canvas id="game"></canvas>
+<div id="flash"></div>
+
+<div id="hud" class="hidden">
+  <div class="hudbox lvl" id="hudLvlBox">NIVEL 1</div>
+  <div class="hudbox score">META <span id="hudScore">0/0</span></div>
+  <div class="hudbox coinbox">🪙 <span id="hudCoins">0</span></div>
+  <div class="hudbox lives">VIDAS <span id="hudLives">❤❤❤❤❤</span></div>
+</div>
+
+<div id="startScreen" class="overlay">
+  <h1 class="logo">MATH FLIGHT</h1>
+  <span class="verstag">EDICIÓN ESCOLAR · v4.0</span>
+  <p class="tag">Un recorrido de 3 niveles por el espacio: esquiva obstáculos futuristas y resuelve matemáticas básicas para avanzar.</p>
+  <div class="panel">
+    <div class="mainMenu">
+      <button class="btn" id="btnStart">🪐 COMENZAR RECORRIDO</button>
+      <button class="btn alt small" id="btnCustomize">🎨 PERSONALIZAR</button>
+      <button class="btn ghost small" id="btnHelp">📖 INSTRUCCIONES</button>
+    </div>
+    <div class="sectionLbl">CRÉDITOS · AUTOR(A) DEL JUEGO</div>
+    <div id="authorDisplay">MARIA JOSE OLIVEROS B</div>
+  </div>
+</div>
+
+<div id="pathScreen" class="overlay hidden">
+  <h1 class="logo" style="font-size:24px;">TU RECORRIDO</h1>
+  <p class="tag">Superarás estas tres misiones en orden. Cada una es más exigente que la anterior.</p>
+  <div class="panel">
+    <div class="pathWrap" id="pathWrap"></div>
+    <div class="mainMenu" style="margin-top:16px;">
+      <button class="btn" id="btnLaunch">🚀 DESPEGAR</button>
+      <button class="btn ghost small" id="btnBackFromPath">◀ VOLVER</button>
+    </div>
+  </div>
+</div>
+
+<div id="customizeScreen" class="overlay hidden">
+  <h1 class="logo" style="font-size:24px;">PERSONALIZA TU NAVE</h1>
+  <div class="panel">
+    <canvas id="shipPreview" width="260" height="130"></canvas>
+    <div class="coinRow">🪙 MONEDAS: <span id="coinBalance">0</span></div>
+    <div class="sectionLbl">COLOR DEL FUSELAJE</div>
+    <div class="swatchRow" id="colorRow"></div>
+    <div class="sectionLbl">ACCESORIOS (compra con monedas de las estrellas)</div>
+    <div class="accGrid" id="accRow"></div>
+    <button class="btn" id="btnSaveShip" style="margin-top:18px;">GUARDAR Y VOLVER</button>
+  </div>
+</div>
+
+<div id="helpOverlay" class="overlay hidden">
+  <div class="panel">
+    <h1 class="logo" style="font-size:22px;">CÓMO SE JUEGA</h1>
+    <ul>
+      <li>Controla la nave con <b>▲ / ▼</b>, las flechas del teclado o <b>W / S</b>.</li>
+      <li>Si chocas con un obstáculo, el juego se detiene y te toca <b>responder una pregunta de matemáticas</b> para seguir volando.</li>
+      <li>Tienes <b>5 vidas</b>. Si respondes mal o se acaba el tiempo, pierdes una.</li>
+      <li>Por el camino aparecen <b>estrellitas doradas</b>: al agarrarlas ganas <b>monedas</b> y ves un tip de matemáticas (puedes pulsar <b>SALTAR</b> si no quieres esperar).</li>
+      <li>Usa las monedas en <b>PERSONALIZAR</b> para comprar accesorios para tu nave.</li>
+      <li>"Comenzar recorrido" te muestra el mapa de <b>3 niveles</b>: al superar uno avanzas automáticamente al siguiente.</li>
+      <li>Cuidado con los obstáculos: satélites dañados, cometas de hielo, naves enemigas y minas EMP.</li>
+      <li>Cada nivel se supera al llegar a <b>100 puntos</b> (10 puntos por cada respuesta correcta).</li>
+    </ul>
+    <button class="btn" id="btnCloseHelp">ENTENDIDO</button>
+  </div>
+</div>
+
+<div id="qOverlay" class="overlay hidden">
+  <div class="panel">
+    <div id="qTopic">TEMA</div>
+    <div id="qText">¿?</div>
+    <div id="qOpts"></div>
+    <div id="qExplain"></div>
+    <button class="btn ghost small hidden" id="btnSkipExplain" style="margin-top:10px; width:auto;">⏭ SALTAR</button>
+    <div class="timerbar"><div id="qTimerFill"></div></div>
+  </div>
+</div>
+
+<div id="tipOverlay" class="overlay hidden">
+  <div class="panel">
+    <div id="tipHeadline">⭐ ESTRELLA RECOLECTADA</div>
+    <div id="tipLifeMsg"></div>
+    <div id="tipText"></div>
+    <div class="timerbar"><div id="tipTimerFill"></div></div>
+    <button class="btn ghost small" id="btnSkipTip" style="margin-top:14px; width:auto;">⏭ SALTAR</button>
+  </div>
+</div>
+
+<div id="gameOverScreen" class="overlay hidden">
+  <h1 class="big" style="color:var(--danger); text-shadow:0 0 20px var(--danger);">MISIÓN FALLIDA</h1>
+  <div class="panel">
+    <div id="goStats"></div>
+    <div class="mainMenu" style="margin-top:14px;">
+      <button class="btn alt" id="btnRetry">🔄 REINTENTAR NIVEL</button>
+      <button class="btn ghost" id="btnMainMenuFromGO">🏠 MENÚ PRINCIPAL</button>
+    </div>
+  </div>
+</div>
+
+<div id="levelCompleteScreen" class="overlay hidden">
+  <h1 class="big" style="color:var(--good); text-shadow:0 0 20px var(--good);">¡NIVEL SUPERADO!</h1>
+  <div class="panel">
+    <div id="lcStats"></div>
+    <div class="pathBadges" id="pathBadges"></div>
+    <div class="timerbar" style="margin-top:16px;"><div id="lcTimerFill"></div></div>
+    <button class="btn" id="btnContinueNow" style="margin-top:16px;">➡ CONTINUAR AHORA</button>
+  </div>
+</div>
+
+<div id="victoryScreen" class="overlay hidden">
+  <h1 class="big" style="color:var(--good); text-shadow:0 0 20px var(--good);">¡MISIÓN CUMPLIDA!</h1>
+  <div class="panel">
+    <div id="vicStats"></div>
+    <br><button class="btn" id="btnPlayAgain">🚀 JUGAR DE NUEVO</button>
+  </div>
+</div>
+
+<div id="touchctrl" class="hidden">
+  <div class="tcol">
+    <div class="tbtn" id="btnUp">▲</div>
+    <div class="tbtn" id="btnDown">▼</div>
+  </div>
+  <div></div>
+</div>
+</div>
+
+<script src="js/game.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
